@@ -49,7 +49,6 @@ public:
   void setVelocityScaledLookAhead() {use_velocity_scaled_lookahead_dist_ = true;};
   void setCostRegulationScaling() {use_cost_regulated_linear_velocity_scaling_ = true;};
   void resetVelocityRegulationScaling() {use_regulated_linear_velocity_scaling_ = false;};
-  void resetVelocityApproachScaling() {use_approach_vel_scaling_ = false;};
 
   double getLookAheadDistanceWrapper(const geometry_msgs::msg::Twist & twist)
   {
@@ -135,6 +134,8 @@ TEST(RegulatedPurePursuitTest, lookaheadAPI)
   std::string name = "PathFollower";
   auto tf = std::make_shared<tf2_ros::Buffer>(node->get_clock());
   auto costmap = std::make_shared<nav2_costmap_2d::Costmap2DROS>("fake_costmap");
+  rclcpp_lifecycle::State state;
+  costmap->on_configure(state);
   ctrl->configure(node, name, tf, costmap);
 
   geometry_msgs::msg::Twist twist;
@@ -193,6 +194,8 @@ TEST(RegulatedPurePursuitTest, rotateTests)
   std::string name = "PathFollower";
   auto tf = std::make_shared<tf2_ros::Buffer>(node->get_clock());
   auto costmap = std::make_shared<nav2_costmap_2d::Costmap2DROS>("fake_costmap");
+  rclcpp_lifecycle::State state;
+  costmap->on_configure(state);
   ctrl->configure(node, name, tf, costmap);
 
   // shouldRotateToPath
@@ -262,6 +265,8 @@ TEST(RegulatedPurePursuitTest, applyConstraints)
   std::string name = "PathFollower";
   auto tf = std::make_shared<tf2_ros::Buffer>(node->get_clock());
   auto costmap = std::make_shared<nav2_costmap_2d::Costmap2DROS>("fake_costmap");
+  rclcpp_lifecycle::State state;
+  costmap->on_configure(state);
   ctrl->configure(node, name, tf, costmap);
 
   double dist_error = 0.0;
@@ -270,9 +275,6 @@ TEST(RegulatedPurePursuitTest, applyConstraints)
   geometry_msgs::msg::Twist curr_speed;
   double pose_cost = 0.0;
   double linear_vel = 0.0;
-
-  // since costmaps here are bogus, we can't access them
-  ctrl->resetVelocityApproachScaling();
 
   // test curvature regulation (default)
   curr_speed.linear.x = 0.25;
