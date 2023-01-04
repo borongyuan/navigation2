@@ -734,7 +734,7 @@ bool RegulatedPurePursuitController::transformPose(
 double RegulatedPurePursuitController::getCostmapMaxExtent() const
 {
   const double max_costmap_dim_meters = std::max(
-    costmap_->getSizeInMetersX(), costmap_->getSizeInMetersX());
+    costmap_->getSizeInMetersX(), costmap_->getSizeInMetersY());
   return max_costmap_dim_meters / 2.0;
 }
 }  // namespace nav2_regulated_pure_pursuit_controller
