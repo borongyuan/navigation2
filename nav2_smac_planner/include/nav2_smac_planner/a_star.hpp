@@ -310,6 +310,7 @@ protected:
 
   GridCollisionChecker * _collision_checker;
   nav2_costmap_2d::Costmap2D * _costmap;
+  std::list<std::unique_ptr<NodeT>> _detached_nodes;
 };
 
 }  // namespace nav2_smac_planner

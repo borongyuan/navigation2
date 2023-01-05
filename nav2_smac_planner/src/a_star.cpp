@@ -649,15 +649,16 @@ typename AStarAlgorithm<NodeT>::NodePtr AStarAlgorithm<NodeT>::setAnalyticPath(
   const NodePtr & node,
   const AnalyticExpansionNodes & expanded_nodes)
 {
+  _detached_nodes.clear();
   // Legitimate final path - set the parent relationships & poses
   NodePtr prev = node;
   for (const auto & node_pose : expanded_nodes) {
-    const auto & n = node_pose.node;
-    if (!n->wasVisited() && n->getIndex() != _goal->getIndex()) {
-      // Make sure this node has not been visited by the regular algorithm.
-      // If it has been, there is the (slight) chance that it is in the path we are expanding
-      // from, so we should skip it.
-      // Skipping to the next node will still create a kinematically feasible path.
+    auto n = node_pose.node;
+    if (n->getIndex() != _goal->getIndex()) {
+      if (n->wasVisited()) {
+        _detached_nodes.push_back(std::make_unique<NodeT>(-1));
+        n = _detached_nodes.back().get();
+      }
       n->parent = prev;
       n->pose = node_pose.proposed_coords;
       n->visited();

@@ -164,6 +164,10 @@ TEST(AStarTest, test_a_star_se2)
   for (unsigned int i = 0; i != path.size(); i++) {
     EXPECT_EQ(costmapA->getCost(path[i].x, path[i].y), 0);
   }
+  // no skipped nodes
+  for (unsigned int i = 1; i != path.size(); i++) {
+    EXPECT_LT(hypotf(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y), 2.1f);
+  }
 
   delete costmapA;
 }
