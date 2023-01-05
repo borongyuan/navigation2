@@ -37,7 +37,7 @@ We further improve in the following ways:
 - Remove need for upsampling by searching with 10x smaller motion primitives (same as their upsampling ratio).
 - Multi-resolution search allowing planning to occur at a coarser resolution for wider spaces (O(N^2) faster).
 - Cost-aware penalty functions in search resulting in far smoother plans (further reducing requirement to smooth).
-- Gradient descent smoother
+- Gradient-descent, basic but fast smoother
 - Faster planning than original paper by highly optimizing the template A\* algorithm.
 - Faster planning via precomputed heuristic, motion primitive, and other values.
 - Automatically adjusted search motion model sizes by motion model, costmap resolution, and bin sizing.
@@ -45,7 +45,7 @@ We further improve in the following ways:
 - Multi-model hybrid searching including Dubin and Reeds-Shepp models. More models may be trivially added.
 - High unit and integration test coverage, doxygen documentation.
 - Uses modern C++14 language features and individual components are easily reusable.
-- Speed optimizations: no data structure graph lookups in main loop, near-zero copy main loop, dynamically generated graph and dynamic programming-based obstacle heuristic, optional recomputation of heuristics for subsiquent planning requests of the same goal, etc.
+- Speed optimizations: no data structure graph lookups in main loop, near-zero copy main loop, dynamically generated graph and dynamic programming-based obstacle heuristic, optional recomputation of heuristics for subsequent planning requests of the same goal, etc.
 - Templated Nodes and A\* implementation to support additional robot extensions.
 - Selective re-evaluation of the obstacle heuristic per goal/map or each iteration, which can speed up subsiquent replanning 20x or more.
 
@@ -97,14 +97,14 @@ planner_server:
       max_planning_time: 3.5              # max time in s for planner to plan, smooth, and upsample. Will scale maximum smoothing and upsampling times based on remaining time after planning.
       motion_model_for_search: "DUBIN"    # 2D Moore, Von Neumann; Hybrid Dubin, Redds-Shepp; State Lattice set internally
       cost_travel_multiplier: 2.0         # For 2D: Cost multiplier to apply to search to steer away from high cost areas. Larger values will place in the center of aisles more exactly (if non-`FREE` cost potential field exists) but take slightly longer to compute. To optimize for speed, a value of 1.0 is reasonable. A reasonable tradeoff value is 2.0. A value of 0.0 effective disables steering away from obstacles and acts like a naive binary search A*.
-      angle_quantization_bins: 64         # For Hybrid/Lattice nodes: Number of angle bins for search, must be 1 for 2D node (no angle search)
+      angle_quantization_bins: 64         # For Hybrid nodes: Number of angle bins for search, must be 1 for 2D node (no angle search)
       analytic_expansion_ratio: 3.5       # For Hybrid/Lattice nodes: The ratio to attempt analytic expansions during search for final approach.
       analytic_expansion_max_length: 3.0    # For Hybrid/Lattice nodes: The maximum length of the analytic expansion to be considered valid to prevent unsafe shortcutting (in meters). This should be scaled with minimum turning radius and be no less than 4-5x the minimum radius
       minimum_turning_radius: 0.40        # For Hybrid/Lattice nodes: minimum turning radius in m of path / vehicle
       reverse_penalty: 2.1                # For Reeds-Shepp model: penalty to apply if motion is reversing, must be => 1
-      change_penalty: 0.15                # For Hybrid nodes: penalty to apply if motion is changing directions, must be >= 0
-      non_straight_penalty: 1.50          # For Hybrid nodes: penalty to apply if motion is non-straight, must be => 1
-      cost_penalty: 1.7                   # For Hybrid nodes: penalty to apply to higher cost areas when adding into the obstacle map dynamic programming distance expansion heuristic. This drives the robot more towards the center of passages. A value between 1.3 - 3.5 is reasonable.
+      change_penalty: 0.0                 # For Hybrid nodes: penalty to apply if motion is changing directions, must be >= 0
+      non_straight_penalty: 1.20          # For Hybrid nodes: penalty to apply if motion is non-straight, must be => 1
+      cost_penalty: 2.0                   # For Hybrid nodes: penalty to apply to higher cost areas when adding into the obstacle map dynamic programming distance expansion heuristic. This drives the robot more towards the center of passages. A value between 1.3 - 3.5 is reasonable.
       lookup_table_size: 20               # For Hybrid nodes: Size of the dubin/reeds-sheep distance window to cache, in meters.
       cache_obstacle_heuristic: True      # For Hybrid nodes: Cache the obstacle map dynamic programming distance expansion heuristic between subsiquent replannings of the same goal location. Dramatically speeds up replanning performance (40x) if costmap is largely static.     
       smoother:
@@ -124,7 +124,7 @@ planner_server:
 ## Install
 
 ```
-sudo apt-get install ros-<ros2-distro>-smac-planner
+sudo apt-get install ros-<ros2-distro>-nav2-smac-planner
 ```
 
 ## Etc (Important Side Notes)
@@ -154,6 +154,20 @@ We provide for the Hybrid-A\* and 2D A\* implementations a costmap downsampler o
 I recommend users using a 5cm resolution costmap and playing with the different values of downsampling rate until they achieve what they think is optimal performance (lowest number of expansions vs. necessity to achieve fine goal poses). Then, I would recommend to change the global costmap resolution to this new value. That way you don't own the compute of downsampling and maintaining a higher-resolution costmap that isn't used.
 
 Remember, the global costmap is **only** there to provide an environment for the planner to work in. It is not there for human-viewing even if a more fine resolution costmap is more human "pleasing". If you use multiple planners in the planner server, then you will want to use the highest resolution for the most needed planner and then use the downsampler to downsample to the Hybrid-A* resolution. 
+
+### Penalty Function Tuning
+
+The penalty function defaults are tuned for all of the planners based on a 5cm costmap. While some change in this should not largely impact default behavior, it may be good to tune for your specific application and needs. The default values were tuned to have decent out of the box behavior for a large number of platforms and resolutions. In most situations, you should not need to play with them. 
+
+**However**, due to the nature of the State Lattice planner being able to use any number of custom generated minimum control sets, this planner may require more tuning to get good behavior. The defaults for State Lattice were generated using the 5cm Ackermann files you can find in this package as initial examples. After a change in formulation for the Hybrid-A* planner, the default of change penalty off seems to produce good results, but please tune to your application need and run-time speed requirements.
+
+When tuning, the "reasonable" range for each penalty is listed below. While you may obviously tune outside of these ranges, I've found that they offer a good trade-off and outside of these ranges behaviors get suboptimal quickly.
+- Cost: 1.7 - 6.0
+- Non-Straight: 1.0 - 1.3
+- Change: 0.0 - 0.3
+- Reverse: 1.3 - 5.0
+
+Note that change penalty must be greater than 0.0. The Non-staight, reverse, and cost penalties must be greater than 1.0, strictly.
 
 ### No path found for clearly valid goals or long compute times
 
