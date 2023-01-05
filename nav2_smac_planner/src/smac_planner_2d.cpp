@@ -128,6 +128,7 @@ void SmacPlanner2D::configure(
     _allow_unknown,
     _max_iterations,
     _max_on_approach_iterations,
+    _max_planning_time,
     0.0 /*unused for 2D*/,
     1.0 /*unused for 2D*/);
 
@@ -360,6 +361,7 @@ void SmacPlanner2D::on_parameter_event_callback(
         reinit_a_star = true;
         _search_info.cost_penalty = value.double_value;
       } else if (name == _name + ".max_planning_time") {
+        reinit_a_star = true;
         _max_planning_time = value.double_value;
       }
     } else if (type == ParameterType::PARAMETER_BOOL) {
@@ -419,6 +421,7 @@ void SmacPlanner2D::on_parameter_event_callback(
         _allow_unknown,
         _max_iterations,
         _max_on_approach_iterations,
+        _max_planning_time,
         0.0 /*unused for 2D*/,
         1.0 /*unused for 2D*/);
     }
