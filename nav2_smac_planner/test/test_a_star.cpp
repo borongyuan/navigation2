@@ -124,6 +124,8 @@ TEST(AStarTest, test_a_star_se2)
   info.non_straight_penalty = 1.1;
   info.reverse_penalty = 2.0;
   info.minimum_turning_radius = 8;  // in grid coordinates
+  info.analytic_expansion_max_length = 20.0;  // in grid coordinates
+  info.analytic_expansion_ratio = 3.5;
   unsigned int size_theta = 72;
   info.cost_penalty = 1.7;
   nav2_smac_planner::AStarAlgorithm<nav2_smac_planner::NodeHybrid> a_star(
@@ -157,8 +159,8 @@ TEST(AStarTest, test_a_star_se2)
   EXPECT_TRUE(a_star.createPath(path, num_it, tolerance));
 
   // check path is the right size and collision free
-  EXPECT_EQ(num_it, 351);
-  EXPECT_EQ(path.size(), 73u);
+  EXPECT_EQ(num_it, 3827);
+  EXPECT_EQ(path.size(), 61u);
   for (unsigned int i = 0; i != path.size(); i++) {
     EXPECT_EQ(costmapA->getCost(path[i].x, path[i].y), 0);
   }
@@ -173,6 +175,8 @@ TEST(AStarTest, test_se2_single_pose_path)
   info.non_straight_penalty = 1.1;
   info.reverse_penalty = 2.0;
   info.minimum_turning_radius = 8;  // in grid coordinates
+  info.analytic_expansion_max_length = 20.0;  // in grid coordinates
+  info.analytic_expansion_ratio = 3.5;
   unsigned int size_theta = 72;
   info.cost_penalty = 1.7;
   nav2_smac_planner::AStarAlgorithm<nav2_smac_planner::NodeHybrid> a_star(
@@ -196,7 +200,7 @@ TEST(AStarTest, test_se2_single_pose_path)
   a_star.setCollisionChecker(checker.get());
   a_star.setStart(10u, 10u, 0u);
   // Goal is one costmap cell away
-  a_star.setGoal(11u, 10u, 0u);
+  a_star.setGoal(12u, 10u, 0u);
   nav2_smac_planner::NodeHybrid::CoordinateVector path;
   EXPECT_TRUE(a_star.createPath(path, num_it, tolerance));
 
